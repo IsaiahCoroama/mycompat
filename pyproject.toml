@@ -10,7 +10,6 @@ readme = "README.md"
 authors = [{ name = "Isaiah Coroama", email = "coroamaisaiah@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [
-    'Development Status :: 3 - Production',
     'Intended Audience :: Developers'
 ]
 keywords = ["compatibility", "library", "lightweight", "system"]
