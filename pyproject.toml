@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mycompat"
-version = "0.0.0"
+version = "0.1.0"
 description = "A lightweight compatibility library designed to facilitate the retrieval of system version information and various other system details"
 readme = "README.md"
 authors = [{ name = "Isaiah Coroama", email = "coroamaisaiah@gmail.com" }]
