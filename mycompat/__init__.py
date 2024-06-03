@@ -11,22 +11,30 @@ import os
 # For more advanced users, a function is provided to unfreeze all variables 
 # that are actively frozen. This can be achieved by calling 'unfreeze'.
 
-class FrozenContext(object):
+# This cache variable helps prevent repeated isinstance checks on
+# values that have already been unfrozen.
+_cache = {}
+
+class FrozenContext:
     def __init__(self, name, callback):
         self.name = name
         self.callback = callback
     
     def __call__(self):
         value = self.callback()
+        _cache[self.name] = value
         globals()[self.name] = value
         return value
 
-class FrozenModule(object):
+class FrozenModule:
     def __getattribute__(self, name):
         try:
             instance = globals()[name]
         except KeyError:
             raise ImportError(f"cannot import name '{name}' from 'mycompat' ({os.path.abspath(__file__)})")
+        
+        if name in _cache:
+            return _cache[name]
 
         if isinstance(instance, FrozenContext):
             return instance()
@@ -48,6 +56,9 @@ class Freezer:
         """
 
         for name, instance in globals().items():
+            if name in _cache:
+                continue
+
             if name.startswith("__") and name.endswith("__"):
                 continue
 
@@ -129,24 +140,25 @@ Freezer.register("is_macos_11", lambda: is_macos_11_compat or is_macos_11_native
 #
 # The following code creates compat.is_venv and is.virtualenv that are True when running a virtual environment, and also
 # compat.base_prefix with the path to the base Python installation.
-base_prefix = os.path.abspath(getattr(sys, 'real_prefix', getattr(sys, 'base_prefix', sys.prefix)))
+Freezer.register("base_prefix", lambda: os.path.abspath(getattr(sys, 'real_prefix', getattr(sys, 'base_prefix', sys.prefix))))
 
 # Ensure `base_prefix` is not containing any relative parts.
-is_venv = is_virtualenv = base_prefix != os.path.abspath(sys.prefix)
+Freezer.register("is_venv", lambda: base_prefix != os.path.abspath(sys.prefix))
+Freezer.register("is_virtualenv", lambda: is_venv)
 
 # Conda environments sometimes have different paths or apply patches to packages that can affect how a hook or package
 # should access resources. Method for determining conda taken from https://stackoverflow.com/questions/47610844#47610844
-is_conda = os.path.isdir(os.path.join(base_prefix, 'conda-meta'))
+Freezer.register("is_conda", lambda: os.path.isdir(os.path.join(base_prefix, 'conda-meta')))
 
 # Similar to ``is_conda`` but is ``False`` using another ``venv``-like manager on top.
-is_pure_conda = os.path.isdir(os.path.join(sys.prefix, 'conda-meta'))
+Freezer.register("is_pure_conda", lambda: os.path.isdir(os.path.join(sys.prefix, 'conda-meta')))
 
 # Full path to python interpreter.
 python_executable = getattr(sys, '_base_executable', sys.executable)
 
 # Is this Python from Microsoft App Store (Windows only)? Python from Microsoft App Store has executable pointing at
 # empty shims.
-is_ms_app_store = is_win and os.path.getsize(python_executable) == 0
+Freezer.register("is_ms_app_store", lambda: is_win and os.path.getsize(python_executable) == 0)
 
 # Gets the system machine type.
 machine = platform.machine()

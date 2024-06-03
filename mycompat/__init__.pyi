@@ -19,7 +19,6 @@ is_win_wine: bool
 is_cygwin: bool
 is_darwin: bool
 
-# Unix platforms
 is_linux: bool
 is_solar: bool
 is_aix: bool
@@ -32,9 +31,9 @@ is_musl: bool
 
 _macos_ver: tuple[int, int, int] | None
 
+is_macos_11: bool
 is_macos_11_compat: bool
 is_macos_11_native: bool
-is_macos_11: bool
 
 base_prefix: str
 
@@ -50,5 +49,7 @@ is_ms_app_store: bool
 machine: str
 architecture: str
 simple_machine: str
+
+is_frozen: int
 
 def unfreeze() -> None: ...
